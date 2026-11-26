@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Diagnostic Results & AI Analysis — AdaptLearn{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+
+    <!-- Top Assessment Summary Card -->
+    <div class="glass-card rounded-3xl p-8 border border-slate-800 relative overflow-hidden text-center sm:text-left">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-8">
+            <div class="space-y-3 max-w-xl">
+                <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-semibold
+                    {% if attempt.assigned_level == 'basic' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/30
+                    {% elif attempt.assigned_level == 'intermediate' %}bg-amber-500/10 text-amber-400 border border-amber-500/30
+                    {% else %}bg-indigo-500/10 text-indigo-300 border border-indigo-500/30{% endif %}">
+                    <i class="fa-solid fa-microchip-ai"></i>
+                    <span>AI Diagnostic Complete</span>
+                </div>
+
+                <h1 class="text-3xl font-extrabold text-white tracking-tight">
+                    Your Assigned Level: 
+                    <span class="capitalize 
+                        {% if attempt.assigned_level == 'basic' %}text-emerald-400
+                        {% elif attempt.assigned_level == 'intermediate' %}text-amber-400
+                        {% else %}text-indigo-400{% endif %}">
+                        {{ attempt.assigned_level }} Track
+                    </span>
+                </h1>
+
+                <p class="text-sm text-slate-300 leading-relaxed">
+                    {{ report.ai_feedback_summary if report else "Assessment analyzed successfully." }}
+                </p>
+            </div>
+
+            <!-- Score Circle -->
+            <div class="shrink-0 flex flex-col items-center">
+                <div class="w-32 h-32 rounded-full border-4 flex flex-col items-center justify-center shadow-2xl
+                    {% if attempt.assigned_level == 'basic' %}border-emerald-500 bg-emerald-950/30 text-emerald-400 shadow-emerald-900/30
+                    {% elif attempt.assigned_level == 'intermediate' %}border-amber-500 bg-amber-950/30 text-amber-400 shadow-amber-900/30
+                    {% else %}border-indigo-500 bg-indigo-950/30 text-indigo-400 shadow-indigo-900/30{% endif %}">
+                    <span class="text-3xl font-black text-white">{{ attempt.score_percentage | round(0) | int }}%</span>
+                    <span class="text-xs uppercase tracking-wider font-semibold opacity-80">{{ attempt.correct_answers }}/{{ attempt.total_questions }} Correct</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Diagnostic Breakdown: Strengths, Weaknesses, Next Steps -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Strengths Card -->
+        <div class="glass-card rounded-3xl p-6 border border-slate-800 space-y-4">
+            <div class="flex items-center space-x-2.5 text-emerald-400">
+                <i class="fa-solid fa-circle-check text-lg"></i>
+                <h3 class="text-base font-bold text-white">Identified Strengths</h3>
+            </div>
+            {% if report and report.strengths %}
+            <ul class="space-y-2 text-xs text-slate-300">
+                {% for item in report.strengths.split(' | ') %}
+                <li class="flex items-start space-x-2">
+                    <i class="fa-solid fa-check text-emerald-400 mt-0.5 text-[10px]"></i>
+                    <span>{{ item }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-xs text-slate-400">Baseline strengths logged.</p>
+            {% endif %}
+        </div>
+
+        <!-- Targeted Focus Areas / Weaknesses -->
+        <div class="glass-card rounded-3xl p-6 border border-slate-800 space-y-4">
+            <div class="flex items-center space-x-2.5 text-amber-400">
+                <i class="fa-solid fa-bullseye text-lg"></i>
+                <h3 class="text-base font-bold text-white">Targeted Focus Areas</h3>
+            </div>
+            {% if report and report.weaknesses %}
+            <ul class="space-y-2 text-xs text-slate-300">
+                {% for item in report.weaknesses.split(' | ') %}
+                <li class="flex items-start space-x-2">
+                    <i class="fa-solid fa-arrow-right text-amber-400 mt-0.5 text-[10px]"></i>
+                    <span>{{ item }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-xs text-slate-400">Focus areas logged.</p>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- AI Action Plan & Next Topic CTA -->
+    <div class="glass-card rounded-3xl p-6 sm:p-8 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6 bg-gradient-to-r from-slate-900 to-indigo-950/40">
+        <div class="space-y-2">
+            <div class="flex items-center space-x-2 text-indigo-400 text-xs font-bold uppercase tracking-wider">
+                <i class="fa-solid fa-route"></i>
+                <span>Adaptive Recommendation</span>
+            </div>
+            <h4 class="text-lg font-bold text-white">
+                {{ report.recommended_next_topic if report else "Ready to begin your adapted curriculum." }}
+            </h4>
+            <p class="text-xs text-slate-400">
+                All short notes and short video clips for your curriculum are now automatically tailored to your level.
+            </p>
+        </div>
+
+        <div class="flex items-center space-x-3 w-full sm:w-auto">
+            <a href="{{ url_for('dashboard') }}" class="w-full sm:w-auto text-center px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl shadow-xl shadow-indigo-600/30 transition transform hover:-translate-y-0.5 whitespace-nowrap">
+                <span>Start Learning Track</span>
+                <i class="fa-solid fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

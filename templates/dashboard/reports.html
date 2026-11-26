@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+{% block title %}Performance Analytics & AI Reports — AdaptLearn{% endblock %}
+
+{% block content %}
+<div class="space-y-8 max-w-6xl mx-auto">
+
+    <!-- Top KPI Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+        <!-- Current Level -->
+        <div class="glass-card rounded-2xl p-5 border border-slate-800">
+            <div class="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                <span>Learning Level</span>
+                <i class="fa-solid fa-graduation-cap text-indigo-400"></i>
+            </div>
+            <div class="text-xl font-bold text-white capitalize">
+                {{ perf.user.learning_level if perf.user.learning_level != 'undetermined' else 'Unclassified' }}
+            </div>
+            <div class="text-[11px] text-slate-400 mt-1">
+                {% if perf.user.learning_level == 'basic' %}&lt;40% diagnostic score
+                {% elif perf.user.learning_level == 'intermediate' %}40–70% diagnostic score
+                {% elif perf.user.learning_level == 'advanced' %}&gt;70% diagnostic score
+                {% else %}Diagnostic required{% endif %}
+            </div>
+        </div>
+
+        <!-- Topics Mastered -->
+        <div class="glass-card rounded-2xl p-5 border border-slate-800">
+            <div class="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                <span>Topics Mastered</span>
+                <i class="fa-solid fa-circle-check text-emerald-400"></i>
+            </div>
+            <div class="text-xl font-bold text-white">
+                {{ perf.completed_count }} / {{ perf.total_topics }}
+            </div>
+            <div class="text-[11px] text-emerald-400 mt-1">
+                {{ perf.progress_pct }}% Curriculum Complete
+            </div>
+        </div>
+
+        <!-- Average Score -->
+        <div class="glass-card rounded-2xl p-5 border border-slate-800">
+            <div class="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                <span>Average Score</span>
+                <i class="fa-solid fa-chart-line text-cyan-400"></i>
+            </div>
+            <div class="text-xl font-bold text-white">
+                {{ perf.average_score }}%
+            </div>
+            <div class="text-[11px] text-slate-400 mt-1">
+                Across {{ perf.attempts_history | length }} Assessments
+            </div>
+        </div>
+
+        <!-- Diagnostic Score -->
+        <div class="glass-card rounded-2xl p-5 border border-slate-800">
+            <div class="flex items-center justify-between text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">
+                <span>Diagnostic Baseline</span>
+                <i class="fa-solid fa-bullseye text-purple-400"></i>
+            </div>
+            <div class="text-xl font-bold text-white">
+                {% if perf.diagnostic_attempt %}
+                    {{ perf.diagnostic_attempt.score_percentage | round(0) | int }}%
+                {% else %}
+                    N/A
+                {% endif %}
+            </div>
+            <div class="text-[11px] text-slate-400 mt-1">
+                {% if perf.diagnostic_attempt %}
+                    {{ perf.diagnostic_attempt.correct_answers }}/10 Correct Answers
+                {% else %}
+                    Pending Test
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Charts Section: Radar & Timeline -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Radar Chart: Topic Mastery Breakdown -->
+        <div class="glass-card rounded-3xl p-6 border border-slate-800 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center space-x-2 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
+                    <i class="fa-solid fa-radar"></i>
+                    <span>Topic Mastery Radar</span>
+                </div>
+                <h3 class="text-base font-bold text-white">Competency Coverage</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Visualizes mastery percentages across each curriculum topic</p>
+            </div>
+            <div class="h-64 mt-4 relative flex items-center justify-center">
+                <canvas id="radarChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Line Chart: Score Progression Timeline -->
+        <div class="glass-card rounded-3xl p-6 border border-slate-800 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center space-x-2 text-cyan-400 text-xs font-bold uppercase tracking-wider mb-1">
+                    <i class="fa-solid fa-arrow-trend-up"></i>
+                    <span>Score Trajectory</span>
+                </div>
+                <h3 class="text-base font-bold text-white">Performance Over Time</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Tracks chronological score progression across all quizzes</p>
+            </div>
+            <div class="h-64 mt-4 relative flex items-center justify-center">
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- AI Diagnostic Insight & Recommendations -->
+    {% if perf.latest_report %}
+    <div class="glass-card rounded-3xl p-6 sm:p-8 border border-slate-800 space-y-4 bg-gradient-to-br from-slate-900 via-indigo-950/20 to-slate-900">
+        <div class="flex items-center space-x-2.5 text-indigo-400">
+            <i class="fa-solid fa-brain text-xl"></i>
+            <h3 class="text-lg font-bold text-white">AI Diagnostic Synthesis</h3>
+        </div>
+
+        <p class="text-xs text-slate-300 leading-relaxed">
+            {{ perf.latest_report.ai_feedback_summary }}
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <div class="p-4 rounded-2xl bg-slate-900/80 border border-emerald-500/20 space-y-2">
+                <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center space-x-1.5">
+                    <i class="fa-solid fa-shield-check"></i>
+                    <span>Mastered Competencies</span>
+                </div>
+                <ul class="text-xs text-slate-300 space-y-1">
+                    {% for item in perf.latest_report.strengths.split(' | ') %}
+                    <li class="flex items-start space-x-1.5">
+                        <i class="fa-solid fa-check text-emerald-400 text-[10px] mt-0.5"></i>
+                        <span>{{ item }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slate-900/80 border border-amber-500/20 space-y-2">
+                <div class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
+                    <i class="fa-solid fa-crosshairs"></i>
+                    <span>Targeted Review Areas</span>
+                </div>
+                <ul class="text-xs text-slate-300 space-y-1">
+                    {% for item in perf.latest_report.weaknesses.split(' | ') %}
+                    <li class="flex items-start space-x-1.5">
+                        <i class="fa-solid fa-arrow-right text-amber-400 text-[10px] mt-0.5"></i>
+                        <span>{{ item }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex items-center space-x-3 text-xs text-slate-200">
+            <i class="fa-solid fa-compass text-indigo-400 text-lg shrink-0"></i>
+            <div>
+                <span class="font-bold text-indigo-300">Next Action:</span>
+                <span>{{ perf.latest_report.recommended_next_topic }}</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Detailed Assessment History Table -->
+    <div class="glass-card rounded-3xl p-6 border border-slate-800 space-y-4">
+        <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-white">Full Assessment Log</h3>
+            <span class="text-xs text-slate-400">{{ perf.attempts_history | length }} Total Entries</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300">
+                <thead class="bg-slate-900/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+                    <tr>
+                        <th class="py-3 px-4">Assessment</th>
+                        <th class="py-3 px-4">Type</th>
+                        <th class="py-3 px-4">Score</th>
+                        <th class="py-3 px-4">Outcome</th>
+                        <th class="py-3 px-4">Date & Time</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60">
+                    {% for a in perf.attempts_history | reverse %}
+                    <tr class="hover:bg-slate-800/30 transition">
+                        <td class="py-3 px-4 font-semibold text-white">{{ a.assessment_name }}</td>
+                        <td class="py-3 px-4">
+                            {% if a.is_diagnostic %}
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-500/10 text-purple-300 border border-purple-500/20">Diagnostic Benchmark</span>
+                            {% else %}
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">Micro-Assessment</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 font-bold text-white">{{ a.score_percentage | round(0) | int }}%</td>
+                        <td class="py-3 px-4">
+                            {% if a.score_percentage >= 60 %}
+                                <span class="text-emerald-400 font-semibold"><i class="fa-solid fa-check mr-1"></i> Passed</span>
+                            {% else %}
+                                <span class="text-rose-400 font-semibold"><i class="fa-solid fa-rotate-left mr-1"></i> Remedial</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-slate-500">{{ a.completed_at }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="py-6 text-center text-slate-500">No assessments completed yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const radarData = {{ perf.chart_data.radar | tojson }};
+    const timelineData = {{ perf.chart_data.timeline | tojson }};
+
+    // Radar Chart
+    const ctxRadar = document.getElementById("radarChart").getContext("2d");
+    new Chart(ctxRadar, {
+        type: 'radar',
+        data: {
+            labels: radarData.labels,
+            datasets: [{
+                label: 'Mastery %',
+                data: radarData.scores,
+                fill: true,
+                backgroundColor: 'rgba(99, 102, 241, 0.25)',
+                borderColor: '#6366f1',
+                pointBackgroundColor: '#818cf8',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: '#6366f1'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                    grid: { color: 'rgba(255, 255, 255, 0.08)' },
+                    pointLabels: {
+                        color: '#94a3b8',
+                        font: { size: 10 }
+                    },
+                    suggestedMin: 0,
+                    suggestedMax: 100,
+                    ticks: {
+                        backdropColor: 'transparent',
+                        color: '#64748b',
+                        stepSize: 25,
+                        font: { size: 9 }
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    // Timeline Line Chart
+    const ctxTimeline = document.getElementById("timelineChart").getContext("2d");
+    new Chart(ctxTimeline, {
+        type: 'line',
+        data: {
+            labels: timelineData.labels.length > 0 ? timelineData.labels : ['Start'],
+            datasets: [{
+                label: 'Score %',
+                data: timelineData.scores.length > 0 ? timelineData.scores : [0],
+                fill: true,
+                backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                borderColor: '#38bdf8',
+                tension: 0.3,
+                pointRadius: 5,
+                pointBackgroundColor: '#38bdf8'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#94a3b8', font: { size: 10 } }
+                },
+                y: {
+                    suggestedMin: 0,
+                    suggestedMax: 100,
+                    grid: { color: 'rgba(255, 255, 255, 0.08)' },
+                    ticks: { color: '#64748b', font: { size: 10 } }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

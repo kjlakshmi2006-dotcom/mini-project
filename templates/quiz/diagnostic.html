@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Diagnostic Assessment (10 Questions) — AdaptLearn{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- Header Card -->
+    <div class="glass-card rounded-3xl p-6 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+            <div class="inline-flex items-center space-x-2 text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 mb-2">
+                <i class="fa-solid fa-brain"></i>
+                <span>Adaptive Level Benchmark</span>
+            </div>
+            <h1 class="text-2xl font-bold text-white">Python Diagnostic Assessment</h1>
+            <p class="text-xs text-slate-400 mt-1">
+                Answer all 10 questions. Your score classifies your learning level:
+                <span class="text-emerald-400 font-medium">Basic (&lt;40%)</span>, 
+                <span class="text-amber-400 font-medium">Intermediate (40–70%)</span>, or 
+                <span class="text-indigo-400 font-medium">Advanced (&gt;70%)</span>.
+            </p>
+        </div>
+        <div class="flex items-center space-x-3 bg-slate-900/90 px-4 py-2.5 rounded-2xl border border-slate-800 shrink-0">
+            <i class="fa-solid fa-list-check text-indigo-400"></i>
+            <div>
+                <div class="text-[10px] uppercase font-semibold text-slate-400">Answered</div>
+                <div class="text-sm font-bold text-white"><span id="answered-count">0</span> / 10</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Questions Form Container -->
+    <form id="diagnostic-form" class="space-y-6">
+        {% for q in questions %}
+        <div class="glass-card rounded-3xl p-6 sm:p-7 border border-slate-800 space-y-4 question-card" data-qid="{{ q.id }}">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center space-x-2.5">
+                    <span class="w-7 h-7 rounded-lg bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 font-bold text-xs flex items-center justify-center">
+                        {{ loop.index }}
+                    </span>
+                    <span class="text-xs font-semibold text-slate-400">{{ q.topic_title or 'General Python' }}</span>
+                </div>
+                <span class="text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full
+                    {% if q.difficulty_tier == 'basic' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
+                    {% elif q.difficulty_tier == 'intermediate' %}bg-amber-500/10 text-amber-400 border border-amber-500/20
+                    {% else %}bg-indigo-500/10 text-indigo-300 border border-indigo-500/20{% endif %}">
+                    {{ q.difficulty_tier }}
+                </span>
+            </div>
+
+            <!-- Question Text -->
+            <p class="text-base font-medium text-slate-100">{{ q.question_text }}</p>
+
+            <!-- Code Snippet (if any) -->
+            {% if q.code_snippet %}
+            <div class="bg-slate-950 rounded-2xl p-4 border border-slate-800 overflow-x-auto text-sm text-cyan-300 font-mono">
+                <pre><code>{{ q.code_snippet }}</code></pre>
+            </div>
+            {% endif %}
+
+            <!-- Options Radio Group -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                {% for opt_letter, opt_val in [('A', q.option_a), ('B', q.option_b), ('C', q.option_c), ('D', q.option_d)] %}
+                <label class="option-label flex items-start space-x-3 p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-indigo-500/60 hover:bg-slate-800/60 cursor-pointer transition">
+                    <input type="radio" name="q_{{ q.id }}" value="{{ opt_letter }}" class="mt-1 text-indigo-600 focus:ring-indigo-500 bg-slate-800 border-slate-700">
+                    <span class="text-xs font-semibold text-indigo-400 uppercase w-4 shrink-0">{{ opt_letter }}.</span>
+                    <span class="text-xs text-slate-200 select-none">{{ opt_val }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Submit Button Card -->
+        <div class="glass-card rounded-3xl p-6 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 sticky bottom-4 shadow-2xl bg-slate-900/95 backdrop-blur-md">
+            <div>
+                <p class="text-xs text-slate-400">Ensure you have selected answers for all questions.</p>
+                <p class="text-xs text-indigo-400 font-medium mt-0.5" id="unanswered-hint">10 questions remaining.</p>
+            </div>
+            <button type="submit" id="submit-btn" class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-2xl shadow-xl shadow-indigo-600/30 transition transform hover:-translate-y-0.5 flex items-center justify-center space-x-2">
+                <span>Submit Diagnostic Test</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </form>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const form = document.getElementById("diagnostic-form");
+    const countEl = document.getElementById("answered-count");
+    const hintEl = document.getElementById("unanswered-hint");
+    const submitBtn = document.getElementById("submit-btn");
+
+    function updateProgress() {
+        const checked = form.querySelectorAll("input[type=radio]:checked");
+        const count = checked.length;
+        countEl.textContent = count;
+        
+        // Highlight active labels
+        form.querySelectorAll(".option-label").forEach(label => {
+            const radio = label.querySelector("input[type=radio]");
+            if (radio && radio.checked) {
+                label.classList.add("border-indigo-500", "bg-indigo-950/40");
+            } else {
+                label.classList.remove("border-indigo-500", "bg-indigo-950/40");
+            }
+        });
+
+        const remaining = 10 - count;
+        if (remaining > 0) {
+            hintEl.textContent = `${remaining} question${remaining > 1 ? 's' : ''} remaining.`;
+            hintEl.className = "text-xs text-amber-400 font-medium mt-0.5";
+        } else {
+            hintEl.textContent = "All 10 questions answered! Ready to analyze.";
+            hintEl.className = "text-xs text-emerald-400 font-medium mt-0.5";
+        }
+    }
+
+    form.addEventListener("change", updateProgress);
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const answers = {};
+        const radioInputs = form.querySelectorAll("input[type=radio]:checked");
+        radioInputs.forEach(input => {
+            const qid = input.name.replace("q_", "");
+            answers[qid] = input.value;
+        });
+
+        if (Object.keys(answers).length < 10) {
+            if (!confirm(`You have only answered ${Object.keys(answers).length} out of 10 questions. Unanswered questions will be counted as incorrect. Submit anyway?`)) {
+                return;
+            }
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Analyzing with AI...';
+
+        try {
+            const res = await fetch("{{ url_for('submit_diagnostic_quiz') }}", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ answers })
+            });
+            const data = await res.json();
+            if (data.success && data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                alert("Evaluation error occurred. Please try again.");
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>Submit Diagnostic Test</span><i class="fa-solid fa-arrow-right ml-2"></i>';
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Network error occurred.");
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span>Submit Diagnostic Test</span><i class="fa-solid fa-arrow-right ml-2"></i>';
+        }
+    });
+});
+</script>
+{% endblock %}

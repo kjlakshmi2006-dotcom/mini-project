@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Student Registration — AdaptLearn{% endblock %}
+
+{% block content %}
+<div class="min-h-[75vh] flex items-center justify-center">
+    <div class="w-full max-w-md">
+        <div class="glass-card rounded-2xl p-8 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="text-center mb-8">
+                <div class="w-12 h-12 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center mx-auto mb-3">
+                    <i class="fa-solid fa-id-card-clip text-purple-400 text-xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold tracking-tight text-white">Student Registration</h1>
+                <p class="text-sm text-slate-400 mt-1">Start your journey with adaptive AI diagnosis</p>
+            </div>
+
+            <form method="POST" action="{{ url_for('register') }}" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Username</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <input type="text" name="username" required placeholder="johndoe"
+                               class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-10 pr-4 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Email Address</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                            <i class="fa-solid fa-envelope"></i>
+                        </span>
+                        <input type="email" name="email" required placeholder="john@example.com"
+                               class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-10 pr-4 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Password (Min 6 chars)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" name="password" minlength="6" required placeholder="••••••••"
+                               class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-10 pr-4 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition text-sm">
+                    </div>
+                </div>
+
+                <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 space-y-1">
+                    <p class="font-semibold text-slate-300"><i class="fa-solid fa-shield-halved text-indigo-400 mr-1"></i> Adaptive Flow:</p>
+                    <p>1. Register your student profile</p>
+                    <p>2. Select Python subject and take 10-Question Diagnostic Test</p>
+                    <p>3. AI identifies your level: Basic (&lt;40%), Intermediate (40-70%), or Advanced (&gt;70%)</p>
+                </div>
+
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-indigo-600/25 flex items-center justify-center space-x-2">
+                    <span>Create Account & Continue</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+            </form>
+
+            <div class="mt-6 pt-6 border-t border-slate-800 text-center">
+                <p class="text-xs text-slate-400">
+                    Already registered? 
+                    <a href="{{ url_for('login') }}" class="text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-4">Sign in here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

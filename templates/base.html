@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AdaptLearn — AI Adaptive Learning{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Marked.js for markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        code, pre {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-full flex flex-col bg-slate-950 text-slate-100">
+
+    <!-- Top Navigation -->
+    <nav class="sticky top-0 z-50 glass-card border-b border-slate-800/80 bg-slate-900/90">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand -->
+                <div class="flex items-center space-x-3">
+                    <a href="{{ url_for('dashboard') if current_user else url_for('login') }}" class="flex items-center space-x-2.5">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                            <i class="fa-solid fa-brain text-white text-lg"></i>
+                        </div>
+                        <span class="text-xl font-bold tracking-tight text-white">Adapt<span class="text-indigo-400">Learn</span></span>
+                    </a>
+                    <span class="text-xs uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">AI Framework</span>
+                </div>
+
+                <!-- Navigation Links -->
+                {% if current_user %}
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="{{ url_for('dashboard') }}" class="text-sm font-medium text-slate-300 hover:text-white transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-compass text-indigo-400"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('reports') }}" class="text-sm font-medium text-slate-300 hover:text-white transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-chart-line text-cyan-400"></i>
+                        <span>Performance Report</span>
+                    </a>
+                </div>
+
+                <!-- User Profile & Level Badge -->
+                <div class="flex items-center space-x-4">
+                    {% if current_user.learning_level == 'basic' %}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                        <i class="fa-solid fa-seedling mr-1.5"></i> Basic Tier (&lt;40%)
+                    </span>
+                    {% elif current_user.learning_level == 'intermediate' %}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                        <i class="fa-solid fa-bolt mr-1.5"></i> Intermediate Tier (40-70%)
+                    </span>
+                    {% elif current_user.learning_level == 'advanced' %}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-300 border border-indigo-500/30">
+                        <i class="fa-solid fa-trophy mr-1.5"></i> Advanced Tier (&gt;70%)
+                    </span>
+                    {% else %}
+                    <a href="{{ url_for('diagnostic_quiz') }}" class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-500/10 text-sky-300 border border-sky-500/30 animate-pulse">
+                        <i class="fa-solid fa-clipboard-question mr-1.5"></i> Take Diagnostic Test
+                    </a>
+                    {% endif %}
+
+                    <div class="flex items-center space-x-3 pl-2 border-l border-slate-800">
+                        <span class="text-sm font-medium text-slate-300 hidden sm:inline">{{ current_user.username }}</span>
+                        <a href="{{ url_for('logout') }}" class="p-2 text-slate-400 hover:text-rose-400 transition" title="Log out">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        </a>
+                    </div>
+                </div>
+                {% else %}
+                <div class="flex items-center space-x-3">
+                    <a href="{{ url_for('login') }}" class="text-sm font-medium text-slate-300 hover:text-white px-3 py-1.5 rounded-lg transition">Sign In</a>
+                    <a href="{{ url_for('register') }}" class="text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg transition shadow-md shadow-indigo-600/30">Get Started</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages Container -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="mb-4 px-4 py-3 rounded-xl text-sm flex items-center justify-between border shadow-lg 
+                    {% if category == 'success' %}bg-emerald-950/70 border-emerald-500/40 text-emerald-200
+                    {% elif category == 'danger' %}bg-rose-950/70 border-rose-500/40 text-rose-200
+                    {% elif category == 'warning' %}bg-amber-950/70 border-amber-500/40 text-amber-200
+                    {% else %}bg-slate-800/80 border-slate-700 text-slate-200{% endif %}">
+                    <div class="flex items-center space-x-2.5">
+                        <i class="fa-solid 
+                            {% if category == 'success' %}fa-circle-check text-emerald-400
+                            {% elif category == 'danger' %}fa-circle-exclamation text-rose-400
+                            {% elif category == 'warning' %}fa-triangle-exclamation text-amber-400
+                            {% else %}fa-circle-info text-sky-400{% endif %}"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                    <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4">
+            <p>AdaptLearn &bull; AI-Powered Adaptive Learning Framework &bull; Python Curriculum Track</p>
+        </div>
+    </footer>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
